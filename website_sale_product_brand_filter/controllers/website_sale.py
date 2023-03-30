@@ -18,9 +18,8 @@ class Website(WebsiteSale):
             attrib_values=attrib_values,
             search_in_description=search_in_description,
         )
-
         # add selected brands to product search domain
-        brands_list = request.httprequest.args.getlist("brand")
+        brands_list = self._get_list_brands(request.httprequest.args)
         return self._update_domain(brands_list, domain)
 
     def _update_domain(self, brands_list, domain):
@@ -31,6 +30,12 @@ class Website(WebsiteSale):
                     domain.remove(leaf)
             domain += [("product_brand_id", "in", selected_brand_ids)]
         return domain
+
+    def _get_list_brands(self, req):
+        for item in ["brand", "brand_ids"]:
+            if req.getlist(item):
+                return req.getlist(item)
+        return []
 
     def _get_brands(self, domain):
         return (
@@ -75,9 +80,9 @@ class Website(WebsiteSale):
         return brands.sorted(key=lambda brand: brand.name)
 
     @http.route()
-    def shop(self, page=0, category=None, search="", ppg=False, **post):
+    def shop(self, page=0, category=None, brand=None, ppg=False, search="", **post):
         res = super(Website, self).shop(
-            page=page, category=category, search=search, ppg=ppg, **post
+            page=page, category=category, search=search, brand=brand, ppg=ppg, **post
         )
 
         # parse selected attributes
@@ -92,7 +97,7 @@ class Website(WebsiteSale):
         search_product = request.env["product.template"].search(domain)
 
         # build brands list
-        brands_list = request.httprequest.args.getlist("brand")
+        brands_list = self._get_list_brands(request.httprequest.args)
         selected_brand_ids = [int(brand) for brand in brands_list]
         brands = self._build_brands_list(
             selected_brand_ids, search, products, search_product, category
@@ -113,6 +118,7 @@ class Website(WebsiteSale):
             attrib=attrib_list,
             order=post.get("order"),
             brand=brands_list,
+            brand_ids=selected_brand_ids,
         )
         res.qcontext["keep"] = keep
 

@@ -130,4 +130,14 @@
             >Show less</a>
         </xpath>
     </template>
+
+    <template id="search_brands" name="Search Box" inherit_id="website_sale.search">
+        <xpath expr="//t[contains(@t-if, 'attrib_values')]" position="after">
+            <t t-if="brand_ids">
+                <t t-foreach="brand_ids" t-as="brand">
+                    <input type="hidden" name="brand" t-att-value="brand" />
+                </t>
+            </t>
+        </xpath>
+    </template>
 </odoo>
